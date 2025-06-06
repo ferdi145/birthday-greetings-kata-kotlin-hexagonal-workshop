@@ -20,7 +20,6 @@ class CurrencyConverterTest {
         assertThat(result).isEqualTo(expectedAmount)
     }
 
-    @Disabled
     @Test
     fun `converting USD to EUR`() {
         // given
@@ -34,11 +33,24 @@ class CurrencyConverterTest {
         assertThat(result).isEqualTo(expectedAmount)
     }
 
+    @Test
+    fun `finding correct ForexRate for EUR`() {
+        // given
+        val forexRates = ForexRates()
+        val targetCurrency = EUR
+
+        // when
+        val result = forexRates.findRate(targetCurrency)
+
+        // then
+        assertThat(result).isEqualTo(ForexRate(0.883))
+    }
+
     private fun convert(
         givenAmount: MonetaryAmount,
         targetCurrency: Currency
     ): MonetaryAmount {
-//        val forexRate: ForexRate = ForexRates().findRate(targetCurrency)
+        val forexRate: ForexRate = ForexRates().findRate(targetCurrency)
         return MonetaryAmount(1133, USD)
     }
 
@@ -46,12 +58,12 @@ class CurrencyConverterTest {
 
 class ForexRates {
     fun findRate(targetCurrency: Currency): ForexRate {
-        TODO("Not yet implemented")
+        return rates.get(targetCurrency)!!
     }
 
     val rates = mutableMapOf<Currency, ForexRate>(
         USD to ForexRate(1.33),
-        EUR to ForexRate(1.33),
+        EUR to ForexRate(0.883),
     )
 
 }
