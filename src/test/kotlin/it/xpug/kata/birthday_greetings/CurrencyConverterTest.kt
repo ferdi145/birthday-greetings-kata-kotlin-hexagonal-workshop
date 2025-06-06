@@ -3,17 +3,16 @@ package it.xpug.kata.birthday_greetings
 import it.xpug.kata.birthday_greetings.Currency.EUR
 import it.xpug.kata.birthday_greetings.Currency.USD
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class CurrencyConverterTest {
     @Test
     fun `converting EUR to USD`() {
         // given
-        val givenAmount = MonetaryAmount(1033, EUR)
+        val givenAmount = MonetaryAmount(1000, EUR)
 
         // when
-        val result: MonetaryAmount = convert(givenAmount, USD)
+        val result: MonetaryAmount = givenAmount.convert(USD, ForexRates())
 
         // then
         val expectedAmount = MonetaryAmount(1133, USD)
@@ -24,9 +23,10 @@ class CurrencyConverterTest {
     fun `converting USD to EUR`() {
         // given
         val givenAmount = MonetaryAmount(1000, USD)
+        val givenForexRates = ForexRates()
 
         // when
-        val result: MonetaryAmount = convert(givenAmount, EUR)
+        val result: MonetaryAmount = givenAmount.convert(EUR, givenForexRates)
 
         // then
         val expectedAmount = MonetaryAmount(883, EUR)
@@ -46,14 +46,19 @@ class CurrencyConverterTest {
         assertThat(result).isEqualTo(ForexRate(0.883))
     }
 
-    private fun convert(
-        givenAmount: MonetaryAmount,
-        targetCurrency: Currency
-    ): MonetaryAmount {
-        val forexRate: ForexRate = ForexRates().findRate(targetCurrency)
-        return MonetaryAmount(1133, USD)
-    }
 
+}
+
+data class MonetaryAmount(val amountInCents: Int, val currency: Currency) {
+    fun convert(
+        targetCurrency: Currency,
+        forexRates: ForexRates
+    ): MonetaryAmount {
+        val forexRate: ForexRate = forexRates.findRate(targetCurrency)
+        val convertedAmountInCents = forexRate.convert(amountInCents)
+        
+        return MonetaryAmount(convertedAmountInCents, targetCurrency)
+    }
 }
 
 class ForexRates {
@@ -61,20 +66,20 @@ class ForexRates {
         return rates.get(targetCurrency)!!
     }
 
-    val rates = mutableMapOf<Currency, ForexRate>(
-        USD to ForexRate(1.33),
+    val rates = mutableMapOf(
+        USD to ForexRate(1.133),
         EUR to ForexRate(0.883),
     )
 
 }
 
-data class ForexRate(val rate: Double)
+data class ForexRate(val rate: Double) {
+    fun convert(amountInCents: Int): Int {
+        return (amountInCents * rate).toInt()
+    }
+}
 
 enum class Currency {
     EUR,
     USD
-}
-
-data class MonetaryAmount(val amountInCents: Int, val currency: Currency) {
-
 }
